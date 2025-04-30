@@ -1,0 +1,308 @@
+<!DOCTYPE html >
+< html  lang = "pt-BR" >
+< cabeça >
+    < meta  charset = "UTF-8" >
+    < meta  nome = "viewport"  conteúdo = "largura=largura-do-dispositivo, escala-inicial=1.0" >
+    < title > Jogo da Velha - por Marlon Ramos </ title >
+    < script  src = "https://cdn.tailwindcss.com" > </ script >
+    < link  rel = "folha de estilo"  href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" >
+    < estilo >
+        .célula {
+            largura : 100px ;
+            altura : 100px ;
+            tamanho da fonte : 3rem ;
+            exibição : flexível;
+            justificar-conteúdo : centro;
+            alinhar-itens : centro;
+            cursor : ponteiro;
+            transição : todos os 0,3s de facilidade;
+        }
+        .célula :hover {
+            cor de fundo : rgba ( 255 , 255 , 255 , 0.1 );
+        }
+        .quadro {
+            exibição : grade;
+            grid-template-columns : repetir ( 3 , 1 fr);
+            lacuna : 5px ;
+            largura : 320px ;
+            margem : 0 auto;
+        }
+        .célula vencedora {
+            animação : pulso 1,5s infinito;
+        }
+        @keyframes pulso {
+            0% { cor de fundo : rgba ( 74 , 222 , 128 , 0.3 ); }
+            50% { cor de fundo : rgba ( 74 , 222 , 128 , 0.7 ); }
+            100% { cor de fundo : rgba ( 74 , 222 , 128 , 0.3 ); }
+        }
+        .btn-3d {
+            posição : relativa;
+            transição : todos 0,3s ;
+            caixa-sombra : 0  4px  0  rgba ( 0 , 0 , 0 , 0.2 ), 0  3px  6px  rgba ( 0 , 0 , 0 , 0.1 );
+        }
+        .btn-3d :ativo {
+            transformar : traduzirY ( 4px );
+            caixa-sombra : 0  1px  0  rgba ( 0 , 0 , 0 , 0.2 );
+        }
+        .btn-3d-verde {
+            cor de fundo : #4ade80 ;
+            borda inferior : 4px sólido #22c55e ;
+        }
+        .assinatura {
+            font-family : 'Brush Script MT' , cursiva;
+            sombra de texto : 0  0  5px  rgba ( 74 , 222 , 128 , 0,7 );
+        }
+        .confete {
+            posição : absoluta;
+            largura : 10px ;
+            altura : 10px ;
+            cor de fundo : #f00 ;
+            raio da borda : 50% ;
+            animação : queda 3s linear para frente;
+        }
+        @keyframes queda {
+            para {
+                transformar : traduzirY ( 100vh ) girar ( 360 graus );
+                opacidade : 0 ;
+            }
+        }
+    </ estilo >
+</head>​​
+< body  class = "min-h-screen bg-gray-900 texto-cinza-100 flex flex-col itens-centro justificar-centro p-4" >
+    < div  class = "text-center mb-8" >
+        < h1  class = "text-4xl font-bold mb-2 text-green-400" > JOGO DA VELHA </ h1 >
+        < p  class = "text-gray-400" > por < span  class = "signature text-xl text-green-300" > Marlon Ramos </ span > </ p >
+    </div>​​
+
+    < div  class = "mb-6 texto-xl" >
+        < div  id = "status"  class = "font-semibold text-green-300" > Sua vez (X) </ div >
+        < div  id = "pontuação"  class = "texto-cinza-400 texto-sm mt-1 flex justificar-centralizar espaço-x-4" >
+            < span > < i  class = "fas fa-user text-green-400" > </ i >  < span  id = "player-score" > 0 </ span > </ span >
+            < span > < i  class = "fas fa-robot text-red-400" > </ i >  < span  id = "pontuação do computador" > 0 </ span > </ span >
+            < span > < i  class = "fas fa-handshake texto-amarelo-400" > </ i >  < span  id = "pontuação-sorteio" > 0 </ span > </ span >
+        </div>​​
+    </div>​​
+
+    < div  class = "placa bg-cinza-800 p-2 arredondado-lg sombra-lg mb-8" >
+        <!-- As células serão geradas por JavaScript -->
+    </div>​​
+
+    < botão  id = "reset-btn"  class = "btn-3d btn-3d-verde texto-branco fonte-negrito py-3 px-6 arredondado-lg mb-4 flex itens-centralizado" >
+        < i  class = "fas fa-redo mr-2" > </ i > Reiniciar Jogo
+    </ botão >
+
+    < div  class = "bg-gray-800 p-4 arredondado-lg max-w-md texto-centralizado" >
+        < h3  class = "text-lg font-semibold text-green-400 mb-2" > < i  class = "fas fa-info-circle mr-2" > </ i > Como Jogar: </ h3 >
+        < p  class = "texto-cinza-300 texto-sm" >
+            Você joga como < strong  class = "text-green-400" > X </ strong > e o computador como < strong  class = "text-red-400" > O </ strong > .
+            Clique em qualquer célula vazia para fazer seu jogo. O computador responderá automaticamente.
+        </ p >
+    </div>​​
+
+    < script >
+        documento . addEventListener ( 'DOMContentLoaded' , () => {
+            const boardElement = document . querySelector ( '.board' );
+            const statusElement = document.getElementById ( 'status ' ) ;
+            const resetButton = document . getElementById ( 'reset-btn' );
+            const playerScoreElement = document . getElementById ( 'pontuação do jogador' );
+            const computerScoreElement = document . getElementById ( 'pontuação do computador' );
+            const drawScoreElement = document . getElementById ( 'pontuação-desenho' );
+            deixe o tabuleiro = [ '' , '' , '' , ' ' , '' , '' , '' , '' ] ;
+            let currentPlayer = 'X' ; // O jogador é sempre X
+            deixe gameActive = true ;
+            deixe pontuações = { jogador : 0 , computador : 0 , empate : 0 };
+            // Criar células do quadro
+            para ( seja i = 0 ; i < 9 ; i++) {
+                const célula = documento . createElement ( 'div' );
+                célula. classList . adicionar ( 'célula' , 'borda' , 'borda-cinza-600' , 'texto-verde-400' );
+                célula. setAttribute ( 'índice de dados' , i);
+                célula. addEventListener ( 'clique' , () =>  handleCellClick (i));
+                boardElement. appendChild (célula);
+            }
+            const células = document . querySelectorAll ( '.cell' );
+            // Combinações vencedoras
+            const condições vencedoras = [
+                [ 0 , 1 , 2 ], [ 3 , 4 , 5 ], [ 6 , 7 , 8 ], // linhas
+                [ 0 , 3 , 6 ], [ 1 , 4 , 7 ], [ 2 , 5 , 8 ], // colunas
+                [ 0 , 4 , 8 ], [ 2 , 4 , 6 ]              // diagonais
+            ];
+            // Manipular clique de célula
+            função  handleCellClick ( índice ) {
+                se (tabuleiro[índice] !== '' || !jogoAtivo || JogadorAtual !== 'X' ) retornar ;
+                // Movimento do jogador
+                makeMove (índice, 'X' );
+                
+                se ( checkWin ()) {
+                    handleWin ( 'X' );
+                    retornar ;
+                }
+                se ( checkDraw ()) {
+                    handleDraw ();
+                    retornar ;
+                }
+                // Mudar para o computador
+                currentPlayer = 'O' ;
+                statusElement. textContent = "Vez do computador (O)" ;
+                statusElement. className = "fonte-semibold texto-vermelho-300" ;
+                // O computador se move após um pequeno atraso
+                definirTempo limite ( () => {
+                    se (jogoAtivo) {
+                        const bestMove = findBestMove ();
+                        makeMove (melhorMovimento, 'O' );
+                        
+                        se ( checkWin ()) {
+                            handleWin ( 'O' );
+                            retornar ;
+                        }
+                        se ( checkDraw ()) {
+                            handleDraw ();
+                            retornar ;
+                        }
+                        // Voltar ao player
+                        JogadorAtual = 'X' ;
+                        statusElement. textContent = "Sua vez (X)" ;
+                        statusElement. className = "fonte-semibold texto-verde-300" ;
+                    }
+                }, 500 );
+            }
+            // Faça um movimento
+            função  makeMove ( índice, jogador ) {
+                tabuleiro[índice] = jogador;
+                células[índice].textContent = jogador;
+                células[índice]. classList . remove ( 'texto-verde-400' , 'texto-vermelho-400' );
+                células[índice]. classList . add (jogador === 'X' ? 'texto-verde-400' : 'texto-vermelho-400' );
+            }
+            // Verifique se há vitória
+            função  checkWin () {
+                retornar condições vencedoras. algumas ( combinação => {
+                    retornar combinação. cada ( índice => {
+                        retornar board[índice] === currentPlayer;
+                    });
+                });
+            }
+            // Verificar empate
+            função  checkDraw () {
+                retornar placa. cada ( célula => célula !== '' );
+            }
+            // Lidar com vitória
+            função  handleWin ( vencedor ) {
+                jogoAtivo = falso ;
+                
+                // Destacar células vencedoras
+                const combinaçãovencedora = condiçõesvencedoras. find ( combinação => {
+                    retornar combinação. cada ( índice => {
+                        retornar quadro[índice] === vencedor;
+                    });
+                });
+                combinação vencedora. forEach ( índice => {
+                    células[índice]. classList . add ( 'célula-vencedora' );
+                });
+                // Atualizar status e pontuações
+                se (vencedor === 'X' ) {
+                    statusElement. textContent = "Você ganhou! 🎉" ;
+                    pontuações. jogador ++;
+                    playerScoreElement. textContent = pontuações. jogador ;
+                    criarConfete ();
+                } outro {
+                    statusElement. textContent = "Computador ganhou! 😢" ;
+                    pontuações. computador ++;
+                    computerScoreElement. textContent = pontuações. computador ;
+                }
+            }
+            // Cria efeito confete
+            função  createConfetti () {
+                const cores = [ '#f00' , '#0f0' , '#00f' , '#ff0' , '#f0f' , '#0ff' ];
+                para ( deixe i = 0 ; i < 50 ; i++) {
+                    const confete = documento . createElement ( 'div' );
+                    confete. classList . add ( 'confete' );
+                    confete. estilo . esquerda = Matemática . aleatório () * 100 + 'vw' ;
+                    confete. estilo . topo = - 10 + 'px' ;
+                    confete. estilo . backgroundColor = cores[ Math . piso ( Math . aleatório () * cores. comprimento )];
+                    confete. estilo . largura = Math . aleatório () * 10 + 5 + 'px' ;
+                    confete. estilo . altura = Math . aleatório () * 10 + 5 + 'px' ;
+                    confete. estilo . animaçãoDuration = Math . aleatório () * 3 + 2 + 's' ;
+                    documento . corpo . appendChild (confete);
+                    
+                    // Remover confete após a animação
+                    definirTempo limite ( () => {
+                        confete. remover ();
+                    }, 3000 );
+                }
+            }
+            // Identificador de desenho
+            função  handleDraw () {
+                jogoAtivo = falso ;
+                statusElement. textContent = "Empate! 🤝" ;
+                pontuações. empate ++;
+                drawScoreElement. textContent = pontuações. draw ;
+            }
+            // Reiniciar o jogo
+            função  resetGame () {
+                tabuleiro = [ '' , '' , '' , ' ' , '' , '' , '' , '' ] ;
+                JogadorAtual = 'X' ;
+                gameActive = verdadeiro ;
+                
+                células. forEach ( célula => {
+                    célula.textContent = ' ' ;
+                    célula.classList.remove ( 'célula- vencedora ' ) ;
+                    célula.classList.adicionar ( ' texto - verde-400' ) ;
+                    célula.classList.remover ( ' texto - vermelho -400' ) ;
+                });
+                
+                statusElement. textContent = "Sua vez (X)" ;
+                statusElement. className = "fonte-semibold texto-verde-300" ;
+            }
+            // IA de computador - Algoritmo Minimax
+            função  findBestMove () {
+                // IA simples - primeiro tente vencer, depois bloqueie e depois aleatoriamente
+                
+                // 1. Verifique se o computador pode vencer na próxima jogada
+                para ( deixe i = 0 ; i < board. length ; i++) {
+                    se (board[i] === '' ) {
+                        board[i] = 'O' ;
+                        se ( checkWin ()) {
+                            tabuleiro[i] = '' ;
+                            retornar i;
+                        }
+                        tabuleiro[i] = '' ;
+                    }
+                }
+                
+                // 2. Verifique se o jogador pode vencer no próximo movimento e bloquear
+                para ( deixe i = 0 ; i < board. length ; i++) {
+                    se (board[i] === '' ) {
+                        tabuleiro[i] = 'X' ;
+                        se ( checkWin ()) {
+                            tabuleiro[i] = '' ;
+                            retornar i;
+                        }
+                        tabuleiro[i] = '' ;
+                    }
+                }
+                
+                // 3. Tente assumir o centro se disponível
+                se (board[ 4 ] === '' ) retornar  4 ;
+                
+                // 4. Tente fazer uma curva se possível
+                cantos constantes = [ 0 , 2 , 6 , 8 ];
+                const availableCorners = cantos. filtro ( índice => tabuleiro[índice] === '' );
+                se (cantosdisponíveis. comprimento > 0 ) {
+                    retornar availableCorners[ Math . floor ( Math . random () * availableCorners. length )];
+                }
+                
+                // 5. Aproveite qualquer vantagem disponível
+                const arestas = [ 1 , 3 , 5 , 7 ];
+                const availableEdges = bordas. filtro ( índice => placa[índice] === '' );
+                se (arestasdisponíveis. comprimento > 0 ) {
+                    retornar availableEdges[ Math . floor ( Math . random () * availableEdges. length )];
+                }
+                
+                // Fallback - nunca deve chegar aqui se o tabuleiro não estiver cheio
+                retornar placa. indexOf ( '' );
+            }
+            // Ouvintes de eventos
+            resetButton. addEventListener ( 'clique' , resetGame);
+        });
+    </ script >
+< p  style = "border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;" > Feito com < img  src = "https://enzostvs-deepsite.hf.space/logo.svg"  alt = "Logotipo do DeepSite"  style = "width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);" >  </ p > </ body >
+</ html >

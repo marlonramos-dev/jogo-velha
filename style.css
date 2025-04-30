@@ -1,0 +1,28 @@
+corpo {
+	preenchimento : 2rem ;
+	família de fontes : -apple-system, BlinkMacSystemFont, "Arial" , sem serifa;
+}
+
+h1 {
+	tamanho da fonte : 16px ;
+	margem superior : 0 ;
+}
+
+p {
+	cor : rgb ( 107 , 114 , 128 );
+	tamanho da fonte : 15px ;
+	margem inferior : 10px ;
+	margem superior : 5px ;
+}
+
+.cartão {
+	largura máxima : 620px ;
+	margem : 0 auto;
+	preenchimento : 16px ;
+	borda : 1px cinza claro sólido;
+	raio da borda : 16px ;
+}
+
+.card  p :último-filho {
+	margem inferior : 0 ;
+}
